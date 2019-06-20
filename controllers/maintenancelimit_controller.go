@@ -22,7 +22,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	repairmanv1 "_/Users/nishp/code/repairman/api/v1"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
 )
 
 // MaintenanceLimitReconciler reconciles a MaintenanceLimit object

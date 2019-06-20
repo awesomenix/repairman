@@ -1,6 +1,6 @@
 version: "2"
 domain: k8s.io
-repo: _/Users/nishp/code/repairman
+repo: github.com/awesomenix/repairman
 resources:
 - group: repairman
   version: v1

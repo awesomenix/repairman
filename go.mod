@@ -1,4 +1,4 @@
-module _/Users/nishp/code/repairman
+module github.com/awesomenix/repairman
 
 go 1.12
 

@@ -19,9 +19,9 @@ import (
 	"flag"
 	"os"
 
-	repairmanv1 "_/Users/nishp/code/repairman/api/v1"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
 
-	"_/Users/nishp/code/repairman/controllers"
+	"github.com/awesomenix/repairman/controllers"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
