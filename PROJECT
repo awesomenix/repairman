@@ -1,0 +1,7 @@
+version: "2"
+domain: k8s.io
+repo: _/Users/nishp/code/repairman
+resources:
+- group: repairman
+  version: v1
+  kind: MaintenanceLimit
