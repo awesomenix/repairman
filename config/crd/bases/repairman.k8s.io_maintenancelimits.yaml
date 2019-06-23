@@ -10,7 +10,7 @@ spec:
   names:
     kind: MaintenanceLimit
     plural: maintenancelimits
-  scope: ""
+  scope: Cluster
   subresources:
     status: {}
   validation:

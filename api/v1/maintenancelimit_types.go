@@ -29,6 +29,7 @@ type MaintenanceLimitStatus struct {
 
 // MaintenanceLimit is the Schema for the maintenancelimits API
 // +kubebuilder:object:root=true
+// +kubebuilder:resource:path=maintenancelimits,scope=Cluster
 // +kubebuilder:subresource:status
 type MaintenanceLimit struct {
 	metav1.TypeMeta   `json:",inline"`

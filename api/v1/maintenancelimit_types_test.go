@@ -50,13 +50,11 @@ var _ = Describe("MaintenanceLimit", func() {
 		It("should create an object successfully", func() {
 
 			key = types.NamespacedName{
-				Name:      "foo",
-				Namespace: "default",
+				Name: "foo",
 			}
 			created = &MaintenanceLimit{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "foo",
-					Namespace: "default",
+					Name: "foo",
 				}}
 
 			By("creating an API obj")
