@@ -26,3 +26,23 @@ rules:
   - get
   - update
   - patch
+- apiGroups:
+  - repairman.k8s.io
+  resources:
+  - maintenancerequests
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - repairman.k8s.io
+  resources:
+  - maintenancerequests/status
+  verbs:
+  - get
+  - update
+  - patch

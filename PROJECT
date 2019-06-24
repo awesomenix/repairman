@@ -5,3 +5,6 @@ resources:
 - group: repairman
   version: v1
   kind: MaintenanceLimit
+- group: repairman
+  version: v1
+  kind: MaintenanceRequest

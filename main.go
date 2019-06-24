@@ -69,6 +69,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "MaintenanceLimit")
 		os.Exit(1)
 	}
+	err = (&controllers.MaintenanceRequestReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("MaintenanceRequest"),
+	}).SetupWithManager(mgr)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MaintenanceRequest")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")

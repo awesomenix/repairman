@@ -5,7 +5,7 @@ Coordinate infrastructure maintenance on kubernetes across multiple actors
 
 Infrastructure management has become core of Kubernetes eco system, example cluster-api project aiming to manage infrastructure lifecycle, node-problem detector aimed at detecting infrastructure problems and many more. Infrastructure maintenance never consider the application workloads and may cause more problems than issues it tends to solve. Having a maintenance coordinator makes sure that your infrastructure maintenance is safe by honoring not only infrastructure failing limits (X/Y nodes are allowed to be repaired), but also honoring application workload downtime.
  
-## Design:
+## Design
 
 ![Design](maintenance.jpg)
 
