@@ -19,8 +19,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// MaintenanceState defined below
+type MaintenanceState string
+
+const (
+	// Pending initial state of maintenance update by actor
+	Pending MaintenanceState = "Pending"
+	// Approved mainteanance request is approved updated by operator
+	Approved MaintenanceState = "Approved"
+	// InProgress mainteanance request is in progress, updated by actor
+	InProgress MaintenanceState = "InProgress"
+	// Completed mainteanance request is completed, updated by actor
+	Completed MaintenanceState = "Completed"
+)
+
 // MaintenanceRequestSpec defines the desired state of MaintenanceRequest
 type MaintenanceRequestSpec struct {
+	Name string `json:"name,omitempty"`
+	// +kubebuilder:validation:Enum={Pending,Approved,InProgress,Completed}
+	State MaintenanceState `json:"state,omitempty"`
+	// +kubebuilder:validation:Enum=Node
+	Type string `json:"type,omitempty"`
 }
 
 // MaintenanceRequestStatus defines the observed state of MaintenanceRequest

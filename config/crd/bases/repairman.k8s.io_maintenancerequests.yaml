@@ -386,6 +386,15 @@ spec:
               type: string
           type: object
         spec:
+          properties:
+            name:
+              type: string
+            state:
+              type: string
+            type:
+              enum:
+              - Node
+              type: string
           type: object
         status:
           type: object

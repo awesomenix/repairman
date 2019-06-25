@@ -3,5 +3,7 @@ kind: MaintenanceRequest
 metadata:
   name: maintenancerequest-sample
 spec:
-  # Add fields here
-  foo: bar
+  name: node1
+  state: Pending
+  type: node
+

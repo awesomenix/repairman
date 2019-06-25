@@ -38,6 +38,16 @@ rules:
   - update
   - patch
   - delete
+- resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
 - apiGroups:
   - repairman.k8s.io
   resources:

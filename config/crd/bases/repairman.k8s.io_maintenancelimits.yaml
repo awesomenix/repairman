@@ -386,8 +386,18 @@ spec:
               type: string
           type: object
         spec:
+          properties:
+            limit:
+              maximum: 100
+              minimum: 5
+              type: integer
           type: object
         status:
+          properties:
+            limit:
+              description: Limit dynamically updated by operator based on current
+                cluster state
+              type: integer
           type: object
       type: object
   versions:

@@ -21,10 +21,15 @@ import (
 
 // MaintenanceLimitSpec defines the desired state of MaintenanceLimit
 type MaintenanceLimitSpec struct {
+	// +kubebuilder:validation:Maximum=100
+	// +kubebuilder:validation:Minimum=5
+	Limit uint `json:"limit,omitempty"`
 }
 
 // MaintenanceLimitStatus defines the observed state of MaintenanceLimit
 type MaintenanceLimitStatus struct {
+	// Limit dynamically updated by operator based on current cluster state
+	Limit uint `json:"limit,omitempty"`
 }
 
 // MaintenanceLimit is the Schema for the maintenancelimits API
