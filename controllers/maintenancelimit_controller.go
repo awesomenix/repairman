@@ -86,6 +86,6 @@ func (r *MaintenanceLimitReconciler) getMaintenanceLimitsByType(ctx context.Cont
 	}
 
 	limit = (ml.Spec.Limit * uint(len(nodelist.Items))) / 100
-	limit = uint(math.Min(float64(limit), float64(1)))
+	limit = uint(math.Max(float64(limit), float64(1)))
 	return limit, nil
 }
