@@ -70,14 +70,14 @@ func (r *MaintenanceRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	}
 
 	if underMaintenance >= maintenanceLimit {
-		log.Info("unabe to approve request, will exceed limits",
+		log.Info("unable to approve request, will exceed limits",
 			"name", req.Name, "type", mr.Spec.Type,
 			"um", underMaintenance, "ml", maintenanceLimit)
 		return ret, nil
 	}
 
-	mr.Spec.State = "Pending"
-	err = r.Get(ctx, req.NamespacedName, mr)
+	mr.Spec.State = "Approved"
+	err = r.Update(ctx, mr)
 	if err != nil {
 		log.Error(err, "failed to approve maintenance request", "name", req.Name, "type", mr.Spec.Type)
 		return ret, nil
@@ -95,7 +95,7 @@ func (r *MaintenanceRequestReconciler) SetupWithManager(mgr ctrl.Manager) error 
 func (r *MaintenanceRequestReconciler) getUnderMaintenanceCountByType(ctx context.Context, mr *repairmanv1.MaintenanceRequest) (uint, error) {
 	var umcount uint
 	log := r.Log.WithValues("maintenancerequest", mr.Spec.Type)
-	if !strings.EqualFold(mr.Spec.Type, "Node") {
+	if !strings.EqualFold(mr.Spec.Type, "node") {
 		return umcount, errors.New("Unsupported maintenance type")
 	}
 
@@ -111,9 +111,9 @@ func (r *MaintenanceRequestReconciler) getUnderMaintenanceCountByType(ctx contex
 			continue
 		}
 		// if name is already under maintenance return error
-		if strings.EqualFold(mlr.Spec.Name, mr.Spec.Name) {
-			return umcount, errors.Errorf("already under maintenance, type: %s, name: %s", mr.Spec.Type, mlr.Spec.Name)
-		}
+		// if strings.EqualFold(mlr.Spec.Name, mr.Spec.Name) {
+		// 	return umcount, errors.Errorf("already under maintenance, type: %s, name: %s", mr.Spec.Type, mlr.Spec.Name)
+		// }
 		if mr.Spec.State == repairmanv1.Approved ||
 			mr.Spec.State == repairmanv1.InProgress {
 			log.Info("under maintenance", "type", mlr.Spec.Type, "state", mlr.Spec.State, "name", mlr.Name)

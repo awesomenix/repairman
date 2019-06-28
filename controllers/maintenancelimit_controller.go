@@ -74,7 +74,7 @@ func (r *MaintenanceLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *MaintenanceLimitReconciler) getMaintenanceLimitsByType(ctx context.Context, ml *repairmanv1.MaintenanceLimit) (uint, error) {
 	var limit uint
 	log := r.Log.WithValues("maintenancelimit", ml.Name)
-	if !strings.EqualFold(ml.Name, "Node") {
+	if !strings.EqualFold(ml.Name, "node") {
 		return limit, errors.New("Unsupported maintenance type")
 	}
 

@@ -393,7 +393,7 @@ spec:
               type: string
             type:
               enum:
-              - Node
+              - node
               type: string
           type: object
         status:

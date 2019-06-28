@@ -3,7 +3,7 @@ kind: MaintenanceRequest
 metadata:
   name: maintenancerequest-sample
 spec:
-  name: node1
+  name: default-4291ba32000000
   state: Pending
   type: node
 

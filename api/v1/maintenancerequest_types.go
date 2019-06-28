@@ -38,7 +38,7 @@ type MaintenanceRequestSpec struct {
 	Name string `json:"name,omitempty"`
 	// +kubebuilder:validation:Enum={Pending,Approved,InProgress,Completed}
 	State MaintenanceState `json:"state,omitempty"`
-	// +kubebuilder:validation:Enum=Node
+	// +kubebuilder:validation:Enum=node
 	Type string `json:"type,omitempty"`
 }
 
