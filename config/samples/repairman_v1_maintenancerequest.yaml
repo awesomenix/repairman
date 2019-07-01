@@ -5,5 +5,5 @@ metadata:
 spec:
   name: node1
   state: Pending
-  type: node
+  type: Node
 
