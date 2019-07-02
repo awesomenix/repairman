@@ -5,5 +5,5 @@ metadata:
 spec:
   name: default-4291ba32000000
   state: Pending
-  type: Node
+  type: node
 
