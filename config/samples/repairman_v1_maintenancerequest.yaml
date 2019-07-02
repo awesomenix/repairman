@@ -1,7 +1,7 @@
 apiVersion: repairman.k8s.io/v1
 kind: MaintenanceRequest
 metadata:
-  name: maintenancerequest-sample
+  generateName: maintenancerequest-
 spec:
   name: default-4291ba32000000
   state: Pending

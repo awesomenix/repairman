@@ -200,6 +200,7 @@ sigs.k8s.io/controller-runtime v0.2.0-beta.2 h1:hOWldx1qmGI9TsU+uUsq1xTgVmUV7AZo
 sigs.k8s.io/controller-runtime v0.2.0-beta.2/go.mod h1:TSH2R0nSz4WAlUUlNnOFcOR/VUhfwBLlmtq2X6AiQCA=
 sigs.k8s.io/controller-tools v0.2.0-beta.2 h1:ucniFzEuW7PFfFDuUxacdY4Fy4q065wPguVl+BE2/t0=
 sigs.k8s.io/controller-tools v0.2.0-beta.2/go.mod h1:gC5UAnK1jbxWnDaqTi0yxKIsRsRwshzeRtTUGbM9vos=
+sigs.k8s.io/kubebuilder v1.0.8 h1:XYctSbuOICM9z1Ok0GIWChc1cj90EEEczeJQnb7ZPf0=
 sigs.k8s.io/testing_frameworks v0.1.1 h1:cP2l8fkA3O9vekpy5Ks8mmA0NW/F7yBdXf8brkWhVrs=
 sigs.k8s.io/testing_frameworks v0.1.1/go.mod h1:VVBKrHmJ6Ekkfz284YKhQePcdycOzNH9qL6ht1zEr/U=
 sigs.k8s.io/yaml v1.1.0 h1:4A07+ZFc2wgJwo8YNlQpr1rVlgUDlxXHhPJciaPY5gs=
