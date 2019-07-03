@@ -86,8 +86,7 @@ func TestApproveMaintenanceRequest(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(repairmanv1.InProgress, state)
 
-	//TODO(ganesha): https://github.com/kubernetes/client-go/issues/439
-	// enable tests below when fake client can generate properly
+	//TODO(ganesha): enable tests below by setting namespace to auto generate in tests
 
 	// // set request to completed and ensure new request can be generated against the same node
 	// err = client.UpdateMaintenanceState(context.TODO(), "dummyNode", repairmanv1.Completed)

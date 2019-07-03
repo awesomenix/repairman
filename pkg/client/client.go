@@ -78,6 +78,20 @@ func (c *Client) RequestMaintenance(ctx context.Context, nodeName string) (repai
 	return repairmanv1.Pending, c.Client.Create(ctx, request)
 }
 
+func (c *Client) generateRequest(nodeName string) *repairmanv1.MaintenanceRequest {
+	return &repairmanv1.MaintenanceRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:    c.Name,
+			GenerateName: "mr-",
+		},
+		Spec: repairmanv1.MaintenanceRequestSpec{
+			Name:  nodeName,
+			Type:  Node,
+			State: repairmanv1.Pending,
+		},
+	}
+}
+
 func (c *Client) getLiveRequestByClientName(ctx context.Context, nodeName string) (*repairmanv1.MaintenanceRequest, error) {
 	maintenanceRequests := &repairmanv1.MaintenanceRequestList{}
 	err := c.Client.List(ctx, maintenanceRequests, client.InNamespace(c.Name))
@@ -94,8 +108,7 @@ func (c *Client) getLiveRequestByClientName(ctx context.Context, nodeName string
 	return nil, nil
 }
 
-// IsMaintenanceApproved gets a given request and returns
-//true if the spec.status is approved, false otherwise
+// IsMaintenanceApproved checks if a maintenance request on a node is approved
 func (c *Client) IsMaintenanceApproved(ctx context.Context, nodeName string) (bool, error) {
 	if nodeName == "" {
 		return false, errors.New("Node name required")
