@@ -1,5 +1,11 @@
-# repairman
+# RepairMan <!-- omit in toc -->
+
 Coordinate infrastructure maintenance on kubernetes across multiple actors
+
+## Table of Contents <!-- omit in toc -->
+- [Introduction](#Introduction)
+- [Design](#Design)
+- [Deploy](#Deploy)
 
 ## Introduction
 
@@ -9,7 +15,7 @@ Infrastructure management has become core of Kubernetes eco system, example clus
 
 ![Design](maintenance.jpg)
 
-You can set a maintenance limit (e.g. 5%) which is the max allowable maintenance to occue at once cluster-wide.
+You can set a maintenance limit (e.g. 5%) which is the max allowable maintenance to occur at once cluster-wide.
 
 We define 2 CRDs
 
@@ -29,3 +35,8 @@ We define 2 CRDs
   - Maintenance operator looks at the list of requests for repairs and it either approves or delays  the request  for repair
   - Before the request runs it double checks to ensure it is still safe to do so
 
+## Deploy
+
+```
+kubectl apply -f https://raw.githubusercontent.com/awesomenix/repairman/master/config/deployment/repairman-deployment.yaml
+```
