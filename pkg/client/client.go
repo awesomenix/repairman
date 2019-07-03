@@ -8,8 +8,11 @@ import (
 
 	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
 	corev1 "k8s.io/api/core/v1"
+	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
@@ -50,6 +53,23 @@ func New(clientName string) (*Client, error) {
 		Client:     client,
 		NewRequest: newRequest,
 	}, nil
+}
+
+// IsEnabled checks if repairman is enabled on server
+func (c *Client) IsEnabled(rtype string) (bool, error) {
+	if rtype != nodeType {
+		return false, nil
+	}
+
+	mrCustomResourceDef := &apiextensions.CustomResourceDefinition{}
+	err := c.Get(context.TODO(), types.NamespacedName{Name: "maintenancerequests.repairman.k8s.io"}, mrCustomResourceDef)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return false, nil
 }
 
 // RequestMaintenance returns existing request, else creates a new one
