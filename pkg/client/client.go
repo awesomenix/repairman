@@ -34,7 +34,7 @@ type Client struct {
 // New intializes repairman client
 func New(clientName string) (*Client, error) {
 	if clientName == "" {
-		return nil, errors.New("Client name required")
+		return nil, errors.New("client name required")
 	}
 	config, err := config.GetConfig()
 	if err != nil {

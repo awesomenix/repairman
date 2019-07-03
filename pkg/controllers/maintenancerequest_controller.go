@@ -17,6 +17,7 @@ package controllers
 
 import (
 	"context"
+	"math"
 	"strings"
 	"time"
 
@@ -148,6 +149,9 @@ func (r *MaintenanceRequestReconciler) getMaintenanceLimitsByType(ctx context.Co
 	var mlcount uint
 	err := r.Get(ctx, types.NamespacedName{Name: mr.Spec.Type}, ml)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return math.MaxUint32, nil
+		}
 		log.Error(err, "failed to get maintenance limit", "type", mr.Spec.Type)
 		return mlcount, err
 	}
