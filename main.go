@@ -37,7 +37,6 @@ var (
 )
 
 func init() {
-
 	corev1.AddToScheme(scheme)
 	repairmanv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
@@ -64,16 +63,18 @@ func main() {
 	}
 
 	err = (&controllers.MaintenanceLimitReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("MaintenanceLimit"),
+		Client:        mgr.GetClient(),
+		Log:           ctrl.Log.WithName("controllers").WithName("MaintenanceLimit"),
+		EventRecorder: mgr.GetEventRecorderFor("MaintenanceRequest"),
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MaintenanceLimit")
 		os.Exit(1)
 	}
 	err = (&controllers.MaintenanceRequestReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("MaintenanceRequest"),
+		Client:        mgr.GetClient(),
+		Log:           ctrl.Log.WithName("controllers").WithName("MaintenanceRequest"),
+		EventRecorder: mgr.GetEventRecorderFor("MaintenanceRequest"),
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MaintenanceRequest")

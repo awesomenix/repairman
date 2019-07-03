@@ -27,6 +27,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 
 	repairmanv1 "github.com/awesomenix/repairman/api/v1"
 )
@@ -35,6 +36,7 @@ import (
 type MaintenanceRequestReconciler struct {
 	client.Client
 	Log logr.Logger
+	record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=repairman.k8s.io,resources=maintenancerequests,verbs=get;list;watch;create;update;patch;delete
@@ -55,13 +57,13 @@ func (r *MaintenanceRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	}
 
 	log.Info("received request", "name", req.Name, "type", mr.Spec.Type)
-	ret := ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}
+	return r.ApproveMaintenanceRequest(ctx, log, mr)
+}
 
-	underMaintenance, err := r.getUnderMaintenanceCountByType(ctx, mr)
-	if err != nil {
-		log.Error(err, "failed to get under maintenance count by type", "type", mr.Spec.Type)
-		return ret, nil
-	}
+// ApproveMaintenanceRequest check if mr is under limits,
+// approve if under limits
+func (r *MaintenanceRequestReconciler) ApproveMaintenanceRequest(ctx context.Context, log logr.Logger, mr *repairmanv1.MaintenanceRequest) (ctrl.Result, error) {
+	ret := ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}
 
 	maintenanceLimit, err := r.getMaintenanceLimitsByType(ctx, mr)
 	if err != nil {
@@ -69,9 +71,15 @@ func (r *MaintenanceRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 		return ret, nil
 	}
 
+	underMaintenance, err := r.getUnderMaintenanceCountByType(ctx, mr)
+	if err != nil {
+		log.Error(err, "failed to get under maintenance count by type", "type", mr.Spec.Type)
+		return ret, nil
+	}
+
 	if underMaintenance >= maintenanceLimit {
 		log.Info("unable to approve request, will exceed limits",
-			"name", req.Name, "type", mr.Spec.Type,
+			"name", mr.Name, "type", mr.Spec.Type,
 			"um", underMaintenance, "ml", maintenanceLimit)
 		return ret, nil
 	}
@@ -79,10 +87,11 @@ func (r *MaintenanceRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	mr.Spec.State = "Approved"
 	err = r.Update(ctx, mr)
 	if err != nil {
-		log.Error(err, "failed to approve maintenance request", "name", req.Name, "type", mr.Spec.Type)
+		log.Error(err, "failed to approve maintenance request", "name", mr.Name, "type", mr.Spec.Type)
 		return ret, nil
 	}
 
+	r.Eventf(mr, "Normal", "MaintenanceApproved", "approved maintenance request, under limits %d", maintenanceLimit)
 	return ret, nil
 }
 
@@ -114,8 +123,8 @@ func (r *MaintenanceRequestReconciler) getUnderMaintenanceCountByType(ctx contex
 		// if strings.EqualFold(mlr.Spec.Name, mr.Spec.Name) {
 		// 	return umcount, errors.Errorf("already under maintenance, type: %s, name: %s", mr.Spec.Type, mlr.Spec.Name)
 		// }
-		if mr.Spec.State == repairmanv1.Approved ||
-			mr.Spec.State == repairmanv1.InProgress {
+		if mlr.Spec.State == repairmanv1.Approved ||
+			mlr.Spec.State == repairmanv1.InProgress {
 			log.Info("under maintenance", "type", mlr.Spec.Type, "state", mlr.Spec.State, "name", mlr.Name)
 			umcount++
 			continue
@@ -138,5 +147,5 @@ func (r *MaintenanceRequestReconciler) getMaintenanceLimitsByType(ctx context.Co
 	}
 
 	log.Info("maintenance limits", "type", mr.Spec.Type, "count", ml.Status.Limit)
-	return ml.Spec.Limit, nil
+	return ml.Status.Limit, nil
 }

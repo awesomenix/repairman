@@ -19,10 +19,12 @@ import (
 	"context"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -34,6 +36,7 @@ import (
 type MaintenanceLimitReconciler struct {
 	client.Client
 	Log logr.Logger
+	record.EventRecorder
 }
 
 // +kubebuilder:rbac:groups=repairman.k8s.io,resources=maintenancelimits,verbs=get;list;watch;create;update;patch;delete
@@ -53,16 +56,11 @@ func (r *MaintenanceLimitReconciler) Reconcile(req ctrl.Request) (ctrl.Result, e
 	}
 
 	log.Info("received request", "name", req.Name, "limit", ml.Spec.Limit)
-
-	limit, err := r.getMaintenanceLimitsByType(ctx, ml)
-
-	ml.Status.Limit = limit
-	err = r.Status().Update(ctx, ml)
+	err = r.UpdateMaintenanceLimits(ctx, log, ml)
 	if err != nil {
-		return ctrl.Result{}, err
+		log.Error(err, "failed to get maintenance limits by type", "type", ml.Name)
 	}
-
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 }
 
 func (r *MaintenanceLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
@@ -71,21 +69,45 @@ func (r *MaintenanceLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *MaintenanceLimitReconciler) getMaintenanceLimitsByType(ctx context.Context, ml *repairmanv1.MaintenanceLimit) (uint, error) {
+func (r *MaintenanceLimitReconciler) getMaintenanceLimitsByType(ctx context.Context, ml *repairmanv1.MaintenanceLimit) (uint, uint, error) {
 	var limit uint
 	log := r.Log.WithValues("maintenancelimit", ml.Name)
 	if !strings.EqualFold(ml.Name, "node") {
-		return limit, errors.New("Unsupported maintenance type")
+		return limit, limit, errors.New("unsupported maintenance type")
 	}
 
 	nodelist := &corev1.NodeList{}
 	err := r.List(ctx, nodelist)
 	if err != nil {
 		log.Error(err, "failed to list", "type", ml.Name)
-		return limit, nil
+		return limit, limit, err
+	}
+
+	if len(nodelist.Items) <= 0 {
+		return limit, limit, nil
 	}
 
 	limit = (ml.Spec.Limit * uint(len(nodelist.Items))) / 100
 	limit = uint(math.Max(float64(limit), float64(1)))
-	return limit, nil
+	return limit, uint(len(nodelist.Items)), nil
+}
+
+// UpdateMaintenanceLimits update maintenance limits if changed
+func (r *MaintenanceLimitReconciler) UpdateMaintenanceLimits(ctx context.Context, log logr.Logger, ml *repairmanv1.MaintenanceLimit) error {
+	limit, count, err := r.getMaintenanceLimitsByType(ctx, ml)
+	if err != nil {
+		log.Error(err, "failed to get maintenance limits by type", "type", ml.Name)
+		return err
+	}
+
+	if ml.Status.Limit != limit {
+		ml.Status.Limit = limit
+		err = r.Status().Update(ctx, ml)
+		if err != nil {
+			return err
+		}
+		r.Eventf(ml, "Normal", "UpdatedLimits", "updated limits to %d of %d", limit, count)
+	}
+
+	return nil
 }
