@@ -40,9 +40,10 @@ type MaintenanceRequestReconciler struct {
 }
 
 // +kubebuilder:rbac:groups=repairman.k8s.io,resources=maintenancerequests,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=,resources=nodes,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=repairman.k8s.io,resources=maintenancerequests/status,verbs=get;update;patch
 
+// Reconcile reconciles maintenance request
 func (r *MaintenanceRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("maintenancerequest", req.NamespacedName)

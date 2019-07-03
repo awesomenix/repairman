@@ -38,7 +38,9 @@ rules:
   - update
   - patch
   - delete
-- resources:
+- apiGroups:
+  - ""
+  resources:
   - nodes
   verbs:
   - get
