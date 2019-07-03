@@ -18,23 +18,25 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"testing"
 
-	repairmanv1 "github.com/awesomenix/repairman/api/v1"
-	"github.com/awesomenix/repairman/controllers"
+	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
+	"github.com/awesomenix/repairman/pkg/controllers"
 
 	//"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestUpdateMaitenanceLimits(t *testing.T) {
+func TestApproveMaintenanceRequest(t *testing.T) {
 	assert := assert.New(t)
 	repairmanv1.AddToScheme(scheme.Scheme)
 	f := fake.NewFakeClient()
@@ -54,34 +56,59 @@ func TestUpdateMaitenanceLimits(t *testing.T) {
 		err := f.Create(context.TODO(), node)
 		assert.Nil(err)
 	}
-
-	err := reconciler.UpdateMaintenanceLimits(context.TODO(), reconciler.Log, &repairmanv1.MaintenanceLimit{})
-	assert.NotNil(err)
-	assert.Contains(err.Error(), "unsupported")
-
 	ml := &repairmanv1.MaintenanceLimit{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "node",
 		},
 		Spec: repairmanv1.MaintenanceLimitSpec{
-			Limit: 50,
+			Limit: 10,
 		},
 	}
-	err = f.Create(context.TODO(), ml)
+	err := f.Create(context.TODO(), ml)
+	assert.Nil(err)
 	err = reconciler.UpdateMaintenanceLimits(context.TODO(), reconciler.Log, ml)
 	assert.Nil(err)
 	assert.Equal(ml.Status.Limit, uint(1))
 
-	for i := 1; i < 10; i++ {
-		node := &corev1.Node{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("dummynode%d", i),
-			},
-		}
-		err := f.Create(context.TODO(), node)
-		assert.Nil(err)
+	mrreconciler := &controllers.MaintenanceRequestReconciler{
+		Client:        f,
+		EventRecorder: &record.FakeRecorder{},
+		Log:           ctrl.Log,
 	}
-	err = reconciler.UpdateMaintenanceLimits(context.TODO(), reconciler.Log, ml)
+	mr := &repairmanv1.MaintenanceRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "mr-1",
+		},
+		Spec: repairmanv1.MaintenanceRequestSpec{
+			Name:  "node1",
+			State: repairmanv1.Pending,
+			Type:  "node",
+		},
+	}
+	err = f.Create(context.TODO(), mr)
 	assert.Nil(err)
-	assert.Equal(ml.Status.Limit, uint(5))
+	result, err := mrreconciler.ApproveMaintenanceRequest(context.TODO(), mrreconciler.Log, mr)
+	assert.Nil(err)
+	assert.Equal(result, ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute})
+
+	err = f.Get(context.TODO(), types.NamespacedName{Name: "mr-1"}, mr)
+	assert.Nil(err)
+	assert.Equal(repairmanv1.Approved, mr.Spec.State)
+
+	mr = &repairmanv1.MaintenanceRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "mr-2",
+		},
+		Spec: repairmanv1.MaintenanceRequestSpec{
+			Name:  "node1",
+			State: repairmanv1.Pending,
+			Type:  "node",
+		},
+	}
+	err = f.Create(context.TODO(), mr)
+	assert.Nil(err)
+	result, err = mrreconciler.ApproveMaintenanceRequest(context.TODO(), mrreconciler.Log, mr)
+	assert.Nil(err)
+	assert.Equal(result, ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute})
+	assert.Equal(repairmanv1.Pending, mr.Spec.State)
 }

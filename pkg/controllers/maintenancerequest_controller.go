@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 
-	repairmanv1 "github.com/awesomenix/repairman/api/v1"
+	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
 )
 
 // MaintenanceRequestReconciler reconciles a MaintenanceRequest object
@@ -64,6 +64,10 @@ func (r *MaintenanceRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 // approve if under limits
 func (r *MaintenanceRequestReconciler) ApproveMaintenanceRequest(ctx context.Context, log logr.Logger, mr *repairmanv1.MaintenanceRequest) (ctrl.Result, error) {
 	ret := ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute}
+
+	if mr.Spec.State == repairmanv1.Approved {
+		return ret, nil
+	}
 
 	maintenanceLimit, err := r.getMaintenanceLimitsByType(ctx, mr)
 	if err != nil {

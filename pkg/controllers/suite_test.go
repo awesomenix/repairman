@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	repairmanv1 "github.com/awesomenix/repairman/api/v1"
+	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
