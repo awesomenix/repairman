@@ -18,33 +18,51 @@ package client_test
 import (
 	"context"
 	"fmt"
+	"math/rand"
 
 	"testing"
 
 	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
 	"github.com/awesomenix/repairman/pkg/client"
+	"github.com/awesomenix/repairman/pkg/controllers"
 
-	//"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/record"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	//"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestApproveMaintenanceRequest(t *testing.T) {
-	assert := assert.New(t)
-	repairmanv1.AddToScheme(scheme.Scheme)
-	f := fake.NewFakeClient()
+const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
 
-	client := &client.Client{
-		Client: f,
-		Name:   "fakeName",
+var names []string
+
+func newRequest() *repairmanv1.MaintenanceRequest {
+	b := make([]byte, 31)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	names = append(names, string(b))
+	return &repairmanv1.MaintenanceRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: string(b),
+		},
+	}
+}
+
+func updateMaintenanceLimits(f ctrlclient.Client, assert *assert.Assertions) {
+	reconciler := &controllers.MaintenanceLimitReconciler{
+		Client:        f,
+		EventRecorder: &record.FakeRecorder{},
+		Log:           ctrl.Log,
 	}
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 2; i++ {
 		node := &corev1.Node{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("dummynode%d", i),
@@ -54,52 +72,89 @@ func TestApproveMaintenanceRequest(t *testing.T) {
 		assert.Nil(err)
 	}
 
-	// check error states
-	_, err := client.IsMaintenanceApproved(context.TODO(), "")
+	ml := &repairmanv1.MaintenanceLimit{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "node",
+		},
+		Spec: repairmanv1.MaintenanceLimitSpec{
+			Limit: 10,
+		},
+	}
+	err := f.Create(context.TODO(), ml)
+	assert.Nil(err)
+	err = reconciler.UpdateMaintenanceLimits(context.TODO(), reconciler.Log, ml)
+	assert.Nil(err)
+}
+
+func reconcilemr(f ctrlclient.Client) {
+	mrreconciler := &controllers.MaintenanceRequestReconciler{
+		Client:        f,
+		EventRecorder: &record.FakeRecorder{},
+		Log:           ctrl.Log,
+	}
+
+	for _, name := range names {
+		mrreconciler.Reconcile(ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: "fakeName",
+				Name:      name,
+			},
+		})
+	}
+}
+
+func TestClient(t *testing.T) {
+	assert := assert.New(t)
+	repairmanv1.AddToScheme(scheme.Scheme)
+	f := fake.NewFakeClient()
+
+	client := &client.Client{
+		Client:     f,
+		Name:       "fakeName",
+		NewRequest: newRequest,
+	}
+
+	const nodeType = "node"
+	updateMaintenanceLimits(f, assert)
+
+	isApproved, err := client.IsMaintenanceApproved(context.TODO(), "", nodeType)
 	assert.NotNil(err)
-	_, err = client.IsMaintenanceApproved(context.TODO(), "dummynode")
+	assert.False(isApproved)
+
+	isApproved, err = client.IsMaintenanceApproved(context.TODO(), "dummynode0", nodeType)
+	assert.Nil(err)
+	assert.False(isApproved)
+
+	reconcilemr(f)
+
+	isApproved, err = client.IsMaintenanceApproved(context.TODO(), "dummynode0", nodeType)
+	assert.Nil(err)
+	assert.True(isApproved)
+
+	isApproved, err = client.IsMaintenanceApproved(context.TODO(), "dummynode1", nodeType)
+	assert.Nil(err)
+	assert.False(isApproved)
+
+	reconcilemr(f)
+
+	isApproved, err = client.IsMaintenanceApproved(context.TODO(), "dummynode1", nodeType)
+	assert.Nil(err)
+	assert.False(isApproved)
+
+	err = client.UpdateMaintenanceState(context.TODO(), "dummynode0", nodeType, repairmanv1.Approved)
+	assert.NotNil(err)
+	err = client.UpdateMaintenanceState(context.TODO(), "dummynode0", nodeType, repairmanv1.InProgress)
+	assert.Nil(err)
+
+	err = client.UpdateMaintenanceState(context.TODO(), "dummynode1", nodeType, repairmanv1.InProgress)
 	assert.NotNil(err)
 
-	// create maintenance request
-	state, err := client.RequestMaintenance(context.TODO(), "dummyNode")
-	assert.Nil(err)
-	assert.Equal(repairmanv1.Pending, state)
-
-	// set request to approved
-	err = client.UpdateMaintenanceState(context.TODO(), "dummyNode", repairmanv1.Approved)
+	err = client.UpdateMaintenanceState(context.TODO(), "dummynode0", nodeType, repairmanv1.Completed)
 	assert.Nil(err)
 
-	// confirm it is approved and ensure new request isn't generated
-	state, err = client.RequestMaintenance(context.TODO(), "dummyNode")
+	reconcilemr(f)
+
+	isApproved, err = client.IsMaintenanceApproved(context.TODO(), "dummynode1", nodeType)
 	assert.Nil(err)
-	assert.Equal(repairmanv1.Approved, state)
-
-	// confirm it is approved
-	isApproved, err := client.IsMaintenanceApproved(context.TODO(), "dummyNode")
-	assert.Nil(err)
-	assert.Equal(isApproved, true)
-
-	// set request to in-progress and ensure new request cannot be generated against the same node
-	err = client.UpdateMaintenanceState(context.TODO(), "dummyNode", repairmanv1.InProgress)
-	assert.Nil(err)
-	state, err = client.RequestMaintenance(context.TODO(), "dummyNode")
-	assert.Nil(err)
-	assert.Equal(repairmanv1.InProgress, state)
-
-	//TODO(ganesha): enable tests below by setting namespace to auto generate in tests
-
-	// // set request to completed and ensure new request can be generated against the same node
-	// err = client.UpdateMaintenanceState(context.TODO(), "dummyNode", repairmanv1.Completed)
-	// assert.Nil(err)
-	// state, err = client.RequestMaintenance(context.TODO(), "dummyNode")
-	// assert.Nil(err)
-	// assert.Equal(repairmanv1.Pending, state)
-
-	// // multiple requests should be able to co-exist
-	// state, err = client.RequestMaintenance(context.TODO(), "dummyNode1")
-	// assert.Nil(err)
-	// assert.Equal(repairmanv1.Pending, state)
-	// state, err = client.RequestMaintenance(context.TODO(), "dummyNode2")
-	// assert.Nil(err)
-	// assert.Equal(repairmanv1.Pending, state)
+	assert.True(isApproved)
 }

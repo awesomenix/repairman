@@ -75,7 +75,7 @@ func TestApproveMaintenanceRequest(t *testing.T) {
 		EventRecorder: &record.FakeRecorder{},
 		Log:           ctrl.Log,
 	}
-	mr := &repairmanv1.MaintenanceRequest{
+	mr1 := &repairmanv1.MaintenanceRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "mr-1",
 		},
@@ -85,17 +85,17 @@ func TestApproveMaintenanceRequest(t *testing.T) {
 			Type:  "node",
 		},
 	}
-	err = f.Create(context.TODO(), mr)
+	err = f.Create(context.TODO(), mr1)
 	assert.Nil(err)
-	result, err := mrreconciler.ApproveMaintenanceRequest(context.TODO(), mrreconciler.Log, mr)
+	result, err := mrreconciler.ApproveMaintenanceRequest(context.TODO(), mrreconciler.Log, mr1)
 	assert.Nil(err)
 	assert.Equal(result, ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute})
 
-	err = f.Get(context.TODO(), types.NamespacedName{Name: "mr-1"}, mr)
+	err = f.Get(context.TODO(), types.NamespacedName{Name: "mr-1"}, mr1)
 	assert.Nil(err)
-	assert.Equal(repairmanv1.Approved, mr.Spec.State)
+	assert.Equal(repairmanv1.Approved, mr1.Spec.State)
 
-	mr = &repairmanv1.MaintenanceRequest{
+	mr2 := &repairmanv1.MaintenanceRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "mr-2",
 		},
@@ -105,10 +105,17 @@ func TestApproveMaintenanceRequest(t *testing.T) {
 			Type:  "node",
 		},
 	}
-	err = f.Create(context.TODO(), mr)
+	err = f.Create(context.TODO(), mr2)
 	assert.Nil(err)
-	result, err = mrreconciler.ApproveMaintenanceRequest(context.TODO(), mrreconciler.Log, mr)
+	result, err = mrreconciler.ApproveMaintenanceRequest(context.TODO(), mrreconciler.Log, mr2)
 	assert.Nil(err)
 	assert.Equal(result, ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Minute})
-	assert.Equal(repairmanv1.Pending, mr.Spec.State)
+	assert.Equal(repairmanv1.Pending, mr2.Spec.State)
+
+	mr1.Spec.State = repairmanv1.Completed
+	err = f.Update(context.TODO(), mr1)
+
+	_, err = mrreconciler.ApproveMaintenanceRequest(context.TODO(), mrreconciler.Log, mr2)
+	assert.Nil(err)
+	assert.Equal(repairmanv1.Approved, mr2.Spec.State)
 }
