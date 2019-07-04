@@ -14,18 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 var (
-	scheme   = runtime.NewScheme()
 	nodeType = "node"
 )
-
-func init() {
-	corev1.AddToScheme(scheme)
-	repairmanv1.AddToScheme(scheme)
-}
 
 // Client implementation for the repairman client
 type Client struct {
@@ -35,22 +28,14 @@ type Client struct {
 }
 
 // New intializes repairman client
-func New(clientName string) (*Client, error) {
+func New(clientName string, c client.Client) (*Client, error) {
 	if clientName == "" {
 		return nil, errors.New("client name required")
-	}
-	config, err := config.GetConfig()
-	if err != nil {
-		return nil, err
-	}
-	client, err := client.New(config, client.Options{Scheme: scheme})
-	if err != nil {
-		return nil, err
 	}
 
 	return &Client{
 		Name:       clientName,
-		Client:     client,
+		Client:     c,
 		NewRequest: newRequest,
 	}, nil
 }
@@ -64,7 +49,8 @@ func (c *Client) IsEnabled(rtype string) (bool, error) {
 	mrCustomResourceDef := &apiextensions.CustomResourceDefinition{}
 	err := c.Get(context.TODO(), types.NamespacedName{Name: "maintenancerequests.repairman.k8s.io"}, mrCustomResourceDef)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) ||
+			runtime.IsNotRegisteredError(err) {
 			return false, nil
 		}
 		return false, err
