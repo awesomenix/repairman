@@ -55,7 +55,7 @@ func (c *Client) IsEnabled(rtype string) (bool, error) {
 		}
 		return false, err
 	}
-	return false, nil
+	return true, nil
 }
 
 // RequestMaintenance returns existing request, else creates a new one
