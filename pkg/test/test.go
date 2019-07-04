@@ -93,8 +93,7 @@ func ReconcileMR(f ctrlclient.Client) {
 	for _, name := range names {
 		mrreconciler.Reconcile(ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: "fakeName",
-				Name:      name,
+				Name: name,
 			},
 		})
 	}

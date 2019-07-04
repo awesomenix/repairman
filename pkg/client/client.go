@@ -69,7 +69,8 @@ func (c *Client) requestMaintenance(ctx context.Context, name, rtype string) (*r
 	}
 
 	request = c.NewRequest()
-	request.Namespace = c.Name
+	request.Labels = make(map[string]string)
+	request.Labels["maintenancerequests.repairman.k8s.io/clientname"] = c.Name
 	request.Spec = repairmanv1.MaintenanceRequestSpec{
 		Name:  name,
 		Type:  rtype,
@@ -89,7 +90,10 @@ func newRequest() *repairmanv1.MaintenanceRequest {
 
 func (c *Client) getRequest(ctx context.Context, name, rtype string) (*repairmanv1.MaintenanceRequest, error) {
 	maintenanceRequests := &repairmanv1.MaintenanceRequestList{}
-	err := c.Client.List(ctx, maintenanceRequests, client.InNamespace(c.Name))
+	labels := map[string]string{
+		"maintenancerequests.repairman.k8s.io/clientname": c.Name,
+	}
+	err := c.Client.List(ctx, maintenanceRequests, client.MatchingLabels(labels))
 	if err != nil {
 		return nil, err
 	}
