@@ -55,7 +55,7 @@ func newRequest() *repairmanv1.MaintenanceRequest {
 	}
 }
 
-func updateMaintenanceLimits(f ctrlclient.Client, assert *assert.Assertions) {
+func ReconcileML(f ctrlclient.Client, assert *assert.Assertions) {
 	reconciler := &controllers.MaintenanceLimitReconciler{
 		Client:        f,
 		EventRecorder: &record.FakeRecorder{},
@@ -86,7 +86,7 @@ func updateMaintenanceLimits(f ctrlclient.Client, assert *assert.Assertions) {
 	assert.Nil(err)
 }
 
-func reconcilemr(f ctrlclient.Client) {
+func ReconcileMR(f ctrlclient.Client) {
 	mrreconciler := &controllers.MaintenanceRequestReconciler{
 		Client:        f,
 		EventRecorder: &record.FakeRecorder{},
@@ -115,7 +115,7 @@ func TestClient(t *testing.T) {
 	}
 
 	const nodeType = "node"
-	updateMaintenanceLimits(f, assert)
+	ReconcileML(f, assert)
 
 	isApproved, err := client.IsMaintenanceApproved(context.TODO(), "", nodeType)
 	assert.NotNil(err)
@@ -125,7 +125,7 @@ func TestClient(t *testing.T) {
 	assert.Nil(err)
 	assert.False(isApproved)
 
-	reconcilemr(f)
+	ReconcileMR(f)
 
 	isApproved, err = client.IsMaintenanceApproved(context.TODO(), "dummynode0", nodeType)
 	assert.Nil(err)
@@ -135,7 +135,7 @@ func TestClient(t *testing.T) {
 	assert.Nil(err)
 	assert.False(isApproved)
 
-	reconcilemr(f)
+	ReconcileMR(f)
 
 	isApproved, err = client.IsMaintenanceApproved(context.TODO(), "dummynode1", nodeType)
 	assert.Nil(err)
@@ -152,7 +152,7 @@ func TestClient(t *testing.T) {
 	err = client.UpdateMaintenanceState(context.TODO(), "dummynode0", nodeType, repairmanv1.Completed)
 	assert.Nil(err)
 
-	reconcilemr(f)
+	ReconcileMR(f)
 
 	isApproved, err = client.IsMaintenanceApproved(context.TODO(), "dummynode1", nodeType)
 	assert.Nil(err)
