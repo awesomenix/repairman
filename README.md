@@ -6,6 +6,7 @@ Coordinate infrastructure maintenance on kubernetes across multiple actors
 - [Introduction](#Introduction)
 - [Design](#Design)
 - [Deploy](#Deploy)
+- [Integrations](#Integrations)
 
 ## Introduction
 
@@ -40,3 +41,9 @@ We define 2 CRDs
 ```
 kubectl apply -f https://raw.githubusercontent.com/awesomenix/repairman/master/config/deployment/repairman-deployment.yaml
 ```
+
+## Integrations
+
+![](https://img.shields.io/static/v1.svg?label=integrated&message=repairman&color=green&?style=plastic)
+
+- [DrainSafe](https://github.com/awesomenix/drainsafe)
