@@ -394,7 +394,7 @@ spec:
           properties:
             limit:
               maximum: 100
-              minimum: 5
+              minimum: 0
               type: integer
           type: object
         status:
