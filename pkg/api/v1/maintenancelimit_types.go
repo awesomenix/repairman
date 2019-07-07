@@ -22,7 +22,7 @@ import (
 // MaintenanceLimitSpec defines the desired state of MaintenanceLimit
 type MaintenanceLimitSpec struct {
 	// +kubebuilder:validation:Maximum=100
-	// +kubebuilder:validation:Minimum=5
+	// +kubebuilder:validation:Minimum=0
 	Limit uint `json:"limit,omitempty"`
 }
 
