@@ -50,6 +50,9 @@ type MaintenanceRequestStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=maintenancerequests,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Name",type="string",format="byte",JSONPath=".spec.name"
+// +kubebuilder:printcolumn:name="Type",type="string",format="byte",JSONPath=".spec.type"
+// +kubebuilder:printcolumn:name="State",type="string",format="byte",JSONPath=".spec.state"
 type MaintenanceRequest struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

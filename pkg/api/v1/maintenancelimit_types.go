@@ -36,6 +36,8 @@ type MaintenanceLimitStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=maintenancelimits,scope=Cluster
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Percent",type="integer",format="int32",JSONPath=".spec.limit"
+// +kubebuilder:printcolumn:name="Count",type="integer",format="int32",JSONPath=".status.limit"
 type MaintenanceLimit struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
