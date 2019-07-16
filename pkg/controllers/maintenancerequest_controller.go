@@ -118,7 +118,7 @@ func (r *MaintenanceRequestReconciler) getUnderMaintenanceCountByType(ctx contex
 	mrlist := &repairmanv1.MaintenanceRequestList{}
 	err := r.List(ctx, mrlist)
 	if err != nil {
-		log.Error(err, "failed to list maintenance request", "type", mr.Spec.Type)
+		log.Error(err, "failed to list maintenance requests", "type", mr.Spec.Type)
 		return umcount, err
 	}
 

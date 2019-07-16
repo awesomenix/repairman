@@ -400,6 +400,13 @@ spec:
               maximum: 100
               minimum: 0
               type: integer
+            policies:
+              properties:
+                respectNotReadyNodes:
+                  type: boolean
+                respectUnschedulableNodes:
+                  type: boolean
+              type: object
           type: object
         status:
           properties:
