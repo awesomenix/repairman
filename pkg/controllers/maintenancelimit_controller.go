@@ -71,17 +71,16 @@ func (r *MaintenanceLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // UpdateMaintenanceLimits update maintenance limits if changed
 func (r *MaintenanceLimitReconciler) UpdateMaintenanceLimits(ctx context.Context, log logr.Logger, ml *repairmanv1.MaintenanceLimit) error {
-	limit, err := r.getMaintenanceLimitsByType(ctx, log, ml)
+	if !strings.EqualFold(ml.Name, "node") {
+		return errors.New("unsupported maintenance type")
+	}
+	var nodeList = &corev1.NodeList{}
+	err := r.List(ctx, nodeList)
 	if err != nil {
-		log.Error(err, "failed to get maintenance limits by type", "type", ml.Name)
+		log.Error(err, "failed to get", "type", ml.Name)
 		return err
 	}
-	var nodeList *corev1.NodeList
-	err = r.getNodes(ctx, log, nodeList)
-	if err != nil {
-		log.Error(err, "failed to get maintenance limits by type", "type", ml.Name)
-	}
-	count := len(nodeList.Items)
+	limit := r.calculateMaintenanceLimit(ctx, log, ml, nodeList)
 
 	if ml.Status.Limit != limit {
 		ml.Status.Limit = limit
@@ -89,94 +88,51 @@ func (r *MaintenanceLimitReconciler) UpdateMaintenanceLimits(ctx context.Context
 		if err != nil {
 			return err
 		}
-		r.Eventf(ml, "Normal", "UpdatedLimits", "updated limits to %d of %d", limit, count)
+		r.Eventf(ml, "Normal", "UpdatedLimits", "updated limits to %d of %d", limit, len(nodeList.Items))
 	}
-
 	return nil
 }
 
-// getMaintenanceLimitsByType calculates the max number of nodes that can be updated at the given time
-func (r *MaintenanceLimitReconciler) getMaintenanceLimitsByType(ctx context.Context, log logr.Logger, ml *repairmanv1.MaintenanceLimit) (uint, error) {
-	if !strings.EqualFold(ml.Name, "node") {
-		return 0, errors.New("unsupported maintenance type")
+// calculateMaintenanceLimit calculates the maximum number of nodes
+// that can be updated at a given time
+func (r *MaintenanceLimitReconciler) calculateMaintenanceLimit(ctx context.Context, log logr.Logger, ml *repairmanv1.MaintenanceLimit, nodeList *corev1.NodeList) uint {
+	var unavailable = map[string]corev1.Node{}
+	for _, node := range nodeList.Items {
+		r.applyNodePolicies(node, ml, unavailable)
 	}
 
-	var policied map[string]bool
-	err := r.getPoliciedResourcesByType(ctx, log, ml, policied)
-	if err != nil {
-		log.Error(err, "unable to get policied resource", "type", ml.Name)
-		return 0, err
+	if len(nodeList.Items) <= 0 {
+		return 0
 	}
-
-	var availableResources uint
-	switch ml.Name {
-	case "node":
-		var nodeList *corev1.NodeList
-		err := r.getNodes(ctx, log, nodeList)
-		if err != nil {
-			log.Error(err, "failed to list", "type", ml.Name)
-			return 0, err
-		}
-
-		if len(nodeList.Items) <= 0 {
-			return 0, nil
-		}
-		availableResources = r.calculateAvailableNodes(ctx, nodeList, policied)
-	}
-
-	nominalLimit := ml.Spec.Limit / 100 * availableResources
-	return uint(math.Max(float64(nominalLimit), float64(1))), nil
+	available := r.calculateAvailableNodes(ctx, nodeList, unavailable)
+	nominalLimit := ml.Spec.Limit * available / 100
+	return uint(math.Max(float64(nominalLimit), float64(1)))
 }
 
-func (r *MaintenanceLimitReconciler) getPoliciedResourcesByType(ctx context.Context, log logr.Logger, ml *repairmanv1.MaintenanceLimit, policied map[string]bool) error {
-	switch ml.Name {
-	case "node":
-		var nodeList *corev1.NodeList
-		err := r.getNodes(ctx, log, nodeList)
-		if err != nil {
-			log.Error(err, "failed to list", "type", ml.Name)
-			return err
-		}
-
-		for _, node := range nodeList.Items {
-			r.applyNodePolicies(node, ml, policied)
-		}
-	default:
-		return errors.New("unsupported maintenance type")
+// applyNodePolicies determines which nodes are effected by policies
+func (r *MaintenanceLimitReconciler) applyNodePolicies(node corev1.Node, ml *repairmanv1.MaintenanceLimit, policied map[string]corev1.Node) {
+	if ml.Spec.Policies == nil {
+		return
 	}
-
-	return nil
-}
-
-func (r *MaintenanceLimitReconciler) applyNodePolicies(node corev1.Node, ml *repairmanv1.MaintenanceLimit, policied map[string]bool) {
 	if ml.Spec.Policies.RespectUnschedulableNodes && node.Spec.Unschedulable {
-		policied[node.Name] = true
+		policied[node.Name] = node
 	}
 
 	if ml.Spec.Policies.RespectNotReadyNodes {
 		for _, condition := range node.Status.Conditions {
 			if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionFalse {
-				policied[node.Name] = true
+				policied[node.Name] = node
 			}
 		}
 	}
 }
 
-func (r *MaintenanceLimitReconciler) calculateAvailableNodes(ctx context.Context, nodeList *corev1.NodeList, toRemove map[string]bool) uint {
+func (r *MaintenanceLimitReconciler) calculateAvailableNodes(ctx context.Context, nodeList *corev1.NodeList, unavailable map[string]corev1.Node) uint {
 	var available uint
 	for _, node := range nodeList.Items {
-		if _, ok := toRemove[node.Name]; ok {
+		if _, ok := unavailable[node.Name]; !ok {
 			available++
 		}
 	}
 	return available
-}
-
-func (r *MaintenanceLimitReconciler) getNodes(ctx context.Context, log logr.Logger, nodeList *corev1.NodeList) error {
-	err := r.List(ctx, nodeList)
-	if err != nil {
-		log.Error(err, "failed to list nodes")
-		return err
-	}
-	return nil
 }

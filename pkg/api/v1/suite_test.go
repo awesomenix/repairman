@@ -33,7 +33,7 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-var cfg *rest.Co = fig
+var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
 
