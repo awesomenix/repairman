@@ -11,6 +11,15 @@ metadata:
   creationTimestamp: null
   name: maintenancelimits.repairman.k8s.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.limit
+    format: int32
+    name: Percent
+    type: integer
+  - JSONPath: .status.limit
+    format: int32
+    name: Count
+    type: integer
   group: repairman.k8s.io
   names:
     kind: MaintenanceLimit
@@ -422,6 +431,19 @@ metadata:
   creationTimestamp: null
   name: maintenancerequests.repairman.k8s.io
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.name
+    format: byte
+    name: Name
+    type: string
+  - JSONPath: .spec.type
+    format: byte
+    name: Type
+    type: string
+  - JSONPath: .spec.state
+    format: byte
+    name: State
+    type: string
   group: repairman.k8s.io
   names:
     kind: MaintenanceRequest
