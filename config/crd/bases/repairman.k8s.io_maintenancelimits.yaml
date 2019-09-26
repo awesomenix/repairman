@@ -400,6 +400,10 @@ spec:
               maximum: 100
               minimum: 0
               type: integer
+            policies:
+              items:
+                type: string
+              type: array
           type: object
         status:
           properties:
