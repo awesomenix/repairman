@@ -74,7 +74,7 @@ func TestUpdateMaitenanceLimits(t *testing.T) {
 		},
 		Spec: repairmanv1.MaintenanceLimitSpec{
 			Limit:    50,
-			Policies: &repairmanv1.MaintenanceLimitPolicies{},
+			Policies: []repairmanv1.MaintenanceLimitPolicy{},
 		},
 	}
 	err = f.Create(context.TODO(), ml)
@@ -109,7 +109,7 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 				},
 				Spec: repairmanv1.MaintenanceLimitSpec{
 					Limit:    50,
-					Policies: &repairmanv1.MaintenanceLimitPolicies{},
+					Policies: []repairmanv1.MaintenanceLimitPolicy{},
 				},
 			}, &corev1.NodeList{}, 0,
 		},
@@ -137,7 +137,7 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 				},
 				Spec: repairmanv1.MaintenanceLimitSpec{
 					Limit:    50,
-					Policies: &repairmanv1.MaintenanceLimitPolicies{},
+					Policies: []repairmanv1.MaintenanceLimitPolicy{},
 				},
 			}, &corev1.NodeList{
 				Items: []corev1.Node{
@@ -187,9 +187,7 @@ func TestApplyNodePolicy(t *testing.T) {
 			},
 			&repairmanv1.MaintenanceLimit{
 				Spec: repairmanv1.MaintenanceLimitSpec{
-					Policies: &repairmanv1.MaintenanceLimitPolicies{
-						RespectUnschedulableNodes: true,
-					},
+					Policies: []repairmanv1.MaintenanceLimitPolicy{repairmanv1.RespectUnschedulableNodes},
 				},
 			},
 			map[string]corev1.Node{},
@@ -211,9 +209,7 @@ func TestApplyNodePolicy(t *testing.T) {
 			},
 			&repairmanv1.MaintenanceLimit{
 				Spec: repairmanv1.MaintenanceLimitSpec{
-					Policies: &repairmanv1.MaintenanceLimitPolicies{
-						RespectNotReadyNodes: false,
-					},
+					Policies: []repairmanv1.MaintenanceLimitPolicy{repairmanv1.RespectNotReadyNodes},
 				},
 			},
 			map[string]corev1.Node{},
@@ -238,9 +234,9 @@ func TestApplyNodePolicy(t *testing.T) {
 			},
 			&repairmanv1.MaintenanceLimit{
 				Spec: repairmanv1.MaintenanceLimitSpec{
-					Policies: &repairmanv1.MaintenanceLimitPolicies{
-						RespectUnschedulableNodes: true,
-						RespectNotReadyNodes:      true,
+					Policies: []repairmanv1.MaintenanceLimitPolicy{
+						repairmanv1.RespectNotReadyNodes,
+						repairmanv1.RespectUnschedulableNodes,
 					},
 				},
 			},

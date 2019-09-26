@@ -401,12 +401,9 @@ spec:
               minimum: 0
               type: integer
             policies:
-              properties:
-                respectNotReadyNodes:
-                  type: boolean
-                respectUnschedulableNodes:
-                  type: boolean
-              type: object
+              items:
+                type: string
+              type: array
           type: object
         status:
           properties:

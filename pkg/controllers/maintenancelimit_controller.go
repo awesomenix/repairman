@@ -109,20 +109,39 @@ func (r *MaintenanceLimitReconciler) calculateMaintenanceLimit(ctx context.Conte
 	return uint(math.Max(float64(nominalLimit), float64(1)))
 }
 
+func respectNotReadyNodeHandler(node corev1.Node) bool {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionFalse {
+			return true
+		}
+	}
+	return false
+}
+
+func respectUnschedulableNodeHandler(node corev1.Node) bool {
+	if node.Spec.Unschedulable {
+		return true
+	}
+	return false
+}
+
+func getPolicyHandlers() map[repairmanv1.MaintenanceLimitPolicy]func(corev1.Node) bool {
+	return map[repairmanv1.MaintenanceLimitPolicy]func(corev1.Node) bool{
+		repairmanv1.RespectNotReadyNodes:      respectNotReadyNodeHandler,
+		repairmanv1.RespectUnschedulableNodes: respectUnschedulableNodeHandler,
+	}
+}
+
 // applyNodePolicies determines which nodes are effected by policies
 func (r *MaintenanceLimitReconciler) applyNodePolicies(node corev1.Node, ml *repairmanv1.MaintenanceLimit, policied map[string]corev1.Node) {
-	if ml.Spec.Policies == nil {
-		return
-	}
-	if ml.Spec.Policies.RespectUnschedulableNodes && node.Spec.Unschedulable {
-		policied[node.Name] = node
-	}
-
-	if ml.Spec.Policies.RespectNotReadyNodes {
-		for _, condition := range node.Status.Conditions {
-			if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionFalse {
-				policied[node.Name] = node
-			}
+	handlerFuncs := getPolicyHandlers()
+	for _, policy := range ml.Spec.Policies {
+		handlerFunc, ok := handlerFuncs[policy]
+		if !ok {
+			continue
+		}
+		if handlerFunc(node) {
+			policied[node.Name] = node
 		}
 	}
 }
