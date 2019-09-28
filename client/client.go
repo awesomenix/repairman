@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

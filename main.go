@@ -19,9 +19,9 @@ import (
 	"flag"
 	"os"
 
-	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
 
-	"github.com/awesomenix/repairman/pkg/controllers"
+	"github.com/awesomenix/repairman/controllers"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"

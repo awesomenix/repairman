@@ -7,54 +7,54 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - repairman.k8s.io
   resources:
   - maintenancelimits
   verbs:
+  - create
+  - delete
   - get
   - list
-  - watch
-  - create
-  - update
   - patch
-  - delete
+  - update
+  - watch
 - apiGroups:
   - repairman.k8s.io
   resources:
   - maintenancelimits/status
   verbs:
   - get
-  - update
   - patch
+  - update
 - apiGroups:
   - repairman.k8s.io
   resources:
   - maintenancerequests
   verbs:
+  - create
+  - delete
   - get
   - list
-  - watch
-  - create
-  - update
   - patch
-  - delete
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - get
-  - list
-  - watch
-  - create
   - update
-  - patch
-  - delete
+  - watch
 - apiGroups:
   - repairman.k8s.io
   resources:
   - maintenancerequests/status
   verbs:
   - get
-  - update
   - patch
+  - update

@@ -30,7 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 
-	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
 )
 
 // MaintenanceRequestReconciler reconciles a MaintenanceRequest object

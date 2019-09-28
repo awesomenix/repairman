@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -213,7 +213,7 @@ func TestApplyNodePolicy(t *testing.T) {
 				},
 			},
 			map[string]corev1.Node{},
-			0,
+			1,
 		},
 		{
 			corev1.Node{

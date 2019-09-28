@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"math/rand"
 
-	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
-	"github.com/awesomenix/repairman/pkg/controllers"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
+	"github.com/awesomenix/repairman/controllers"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"

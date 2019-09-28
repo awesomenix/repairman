@@ -22,8 +22,8 @@ import (
 
 	"testing"
 
-	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
-	"github.com/awesomenix/repairman/pkg/controllers"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
+	"github.com/awesomenix/repairman/controllers"
 
 	//"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"

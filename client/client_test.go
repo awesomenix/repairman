@@ -20,10 +20,10 @@ import (
 
 	"testing"
 
-	repairmanv1 "github.com/awesomenix/repairman/pkg/api/v1"
-	"github.com/awesomenix/repairman/pkg/client"
+	repairmanv1 "github.com/awesomenix/repairman/api/v1"
+	"github.com/awesomenix/repairman/client"
 
-	"github.com/awesomenix/repairman/pkg/test"
+	"github.com/awesomenix/repairman/test"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes/scheme"

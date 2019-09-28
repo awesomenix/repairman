@@ -8,15 +8,15 @@ all: manager
 
 # Run tests
 test: generate fmt vet manifests
-	go test ./pkg/... -coverprofile cover.out
+	go test ./... -coverprofile cover.out
 
 # Build manager binary
 manager: generate fmt vet
-	go build -o bin/manager cmd/main.go
+	go build -o bin/manager main.go
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet
-	go run ./cmd/main.go
+	go run main.go
 
 # Install CRDs into a cluster
 install: manifests
@@ -58,7 +58,8 @@ docker-push:
 # download controller-gen if necessary
 controller-gen:
 ifeq (, $(shell which controller-gen))
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.0-beta.2
+	go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.0
+	
 CONTROLLER_GEN=$(shell go env GOPATH)/bin/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
