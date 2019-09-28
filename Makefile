@@ -63,6 +63,7 @@ docker-push:
 # download controller-gen if necessary
 controller-gen:
 ifndef HAS_KUBEBUILDER
+	mkdir -p $(GOBIN)
 	curl -L --fail -O \
 		"https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KUBEBUILDER_VERSION)/kubebuilder_$(KUBEBUILDER_VERSION)_$(PLATFORM)_$(ARCH).tar.gz" && \
 		tar -zxvf kubebuilder_$(KUBEBUILDER_VERSION)_$(PLATFORM)_$(ARCH).tar.gz && \
