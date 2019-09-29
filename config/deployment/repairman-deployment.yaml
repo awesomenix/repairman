@@ -63,6 +63,12 @@ spec:
               description: Limit dynamically updated by operator based on current
                 cluster state
               type: integer
+            unavailable:
+              additionalProperties:
+                description: MaintenancePolicy ...
+                type: string
+              description: Unavailable nodes filtered by above policies
+              type: object
           type: object
       type: object
   version: v1

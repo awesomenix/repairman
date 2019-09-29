@@ -18,6 +18,7 @@ package controllers
 import (
 	"context"
 	"math"
+	"reflect"
 	"strings"
 	"time"
 
@@ -83,10 +84,12 @@ func (r *MaintenanceLimitReconciler) UpdateMaintenanceLimits(ctx context.Context
 		log.Error(err, "failed to get", "type", ml.Name)
 		return err
 	}
-	limit := r.calculateMaintenanceLimit(ctx, ml, nodeList)
+	limit, unavailable := r.calculateMaintenanceLimit(ctx, ml, nodeList)
 
-	if ml.Status.Limit != limit {
+	if ml.Status.Limit != limit ||
+		!reflect.DeepEqual(ml.Status.Unavailable, unavailable) {
 		ml.Status.Limit = limit
+		ml.Status.Unavailable = unavailable
 		err = r.Status().Update(ctx, ml)
 		if err != nil {
 			return err
@@ -98,24 +101,24 @@ func (r *MaintenanceLimitReconciler) UpdateMaintenanceLimits(ctx context.Context
 
 // calculateMaintenanceLimit calculates the maximum number of nodes
 // that can be updated at a given time
-func (r *MaintenanceLimitReconciler) calculateMaintenanceLimit(ctx context.Context, ml *repairmanv1.MaintenanceLimit, nodeList *corev1.NodeList) uint {
+func (r *MaintenanceLimitReconciler) calculateMaintenanceLimit(ctx context.Context, ml *repairmanv1.MaintenanceLimit, nodeList *corev1.NodeList) (uint, map[string]repairmanv1.MaintenancePolicy) {
 	if len(nodeList.Items) <= 0 {
-		return 0
+		return 0, nil
 	}
 
-	unavailable := 0
+	unavailable := make(map[string]repairmanv1.MaintenancePolicy)
 	for _, node := range nodeList.Items {
-		if !r.nodeAvailable(node, ml) {
-			unavailable++
+		if policy := r.nodeAvailable(node, ml); policy != repairmanv1.None {
+			unavailable[node.Name] = policy
 		}
 	}
 
 	nominalLimit := (int(ml.Spec.Limit) * len(nodeList.Items) / 100)
-	calculatedLimit := math.Max(float64(nominalLimit), float64(1)) - float64(unavailable)
-	return uint(math.Max(calculatedLimit, float64(0)))
+	calculatedLimit := math.Max(float64(nominalLimit), float64(1)) - float64(len(unavailable))
+	return uint(math.Max(calculatedLimit, float64(0))), unavailable
 }
 
-func noOp(node corev1.Node) bool {
+func none(node corev1.Node) bool {
 	return true
 }
 
@@ -142,15 +145,15 @@ func policyHandler(policy repairmanv1.MaintenancePolicy) PolicyHandler {
 	case repairmanv1.Unschedulable:
 		return unschedulable
 	}
-	return noOp
+	return none
 }
 
 // applyNodePolicies determines which nodes are effected by policies
-func (r *MaintenanceLimitReconciler) nodeAvailable(node corev1.Node, ml *repairmanv1.MaintenanceLimit) bool {
+func (r *MaintenanceLimitReconciler) nodeAvailable(node corev1.Node, ml *repairmanv1.MaintenanceLimit) repairmanv1.MaintenancePolicy {
 	for _, policy := range ml.Spec.Policies {
 		if !policyHandler(policy)(node) {
-			return false
+			return policy
 		}
 	}
-	return true
+	return repairmanv1.None
 }

@@ -109,7 +109,9 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 				Spec: repairmanv1.MaintenanceLimitSpec{
 					Limit: 50,
 				},
-			}, &corev1.NodeList{}, 0,
+			},
+			&corev1.NodeList{},
+			0,
 		},
 		{
 			&repairmanv1.MaintenanceLimit{
@@ -119,14 +121,16 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 				Spec: repairmanv1.MaintenanceLimitSpec{
 					Limit: 50,
 				},
-			}, &corev1.NodeList{
+			},
+			&corev1.NodeList{
 				Items: []corev1.Node{
 					corev1.Node{},
 					corev1.Node{},
 					corev1.Node{},
 					corev1.Node{},
 				},
-			}, 2,
+			},
+			2,
 		},
 		{
 			&repairmanv1.MaintenanceLimit{
@@ -136,12 +140,14 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 				Spec: repairmanv1.MaintenanceLimitSpec{
 					Limit: 50,
 				},
-			}, &corev1.NodeList{
+			},
+			&corev1.NodeList{
 				Items: []corev1.Node{
 					corev1.Node{},
 					corev1.Node{},
 				},
-			}, 1,
+			},
+			1,
 		},
 		{
 			&repairmanv1.MaintenanceLimit{
@@ -152,16 +158,21 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 					Limit:    50,
 					Policies: []repairmanv1.MaintenancePolicy{repairmanv1.Unschedulable},
 				},
-			}, &corev1.NodeList{
+			},
+			&corev1.NodeList{
 				Items: []corev1.Node{
 					corev1.Node{},
 					corev1.Node{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "dummynode0",
+						},
 						Spec: corev1.NodeSpec{
 							Unschedulable: true,
 						},
 					},
 				},
-			}, 0,
+			},
+			0,
 		},
 		{
 			&repairmanv1.MaintenanceLimit{
@@ -172,22 +183,30 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 					Limit:    50,
 					Policies: []repairmanv1.MaintenancePolicy{repairmanv1.NotReady},
 				},
-			}, &corev1.NodeList{
+			},
+			&corev1.NodeList{
 				Items: []corev1.Node{
 					corev1.Node{},
 					corev1.Node{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "dummynode0",
+						},
 						Spec: corev1.NodeSpec{
 							Unschedulable: true,
 						},
 					},
 				},
-			}, 1,
+			},
+			1,
 		},
 	}
 	assert, reconciler := testSetup(t)
 	for _, tt := range tests {
-		limit := reconciler.calculateMaintenanceLimit(context.TODO(), tt.maintenanceLimit, tt.nodeList)
+		limit, unavailable := reconciler.calculateMaintenanceLimit(context.TODO(), tt.maintenanceLimit, tt.nodeList)
 		assert.Equal(tt.limit, limit)
+		if len(unavailable) != 0 {
+			assert.Contains(unavailable, "dummynode0")
+		}
 	}
 }
 
@@ -195,7 +214,7 @@ func TestApplyNodePolicy(t *testing.T) {
 	var tests = []struct {
 		node             corev1.Node
 		maintenanceLimit *repairmanv1.MaintenanceLimit
-		expected         bool
+		expected         repairmanv1.MaintenancePolicy
 	}{
 		{
 			corev1.Node{
@@ -209,7 +228,7 @@ func TestApplyNodePolicy(t *testing.T) {
 			&repairmanv1.MaintenanceLimit{
 				Spec: repairmanv1.MaintenanceLimitSpec{},
 			},
-			true,
+			repairmanv1.None,
 		},
 		{
 			corev1.Node{
@@ -225,7 +244,7 @@ func TestApplyNodePolicy(t *testing.T) {
 					Policies: []repairmanv1.MaintenancePolicy{repairmanv1.Unschedulable},
 				},
 			},
-			false,
+			repairmanv1.Unschedulable,
 		},
 		{
 			corev1.Node{
@@ -246,7 +265,7 @@ func TestApplyNodePolicy(t *testing.T) {
 					Policies: []repairmanv1.MaintenancePolicy{repairmanv1.NotReady},
 				},
 			},
-			false,
+			repairmanv1.NotReady,
 		},
 		{
 			corev1.Node{
@@ -273,7 +292,7 @@ func TestApplyNodePolicy(t *testing.T) {
 					},
 				},
 			},
-			false,
+			repairmanv1.NotReady,
 		},
 	}
 	assert, reconciler := testSetup(t)

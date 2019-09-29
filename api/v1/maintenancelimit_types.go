@@ -23,6 +23,8 @@ import (
 type MaintenancePolicy string
 
 const (
+	// None ...
+	None MaintenancePolicy = "None"
 	// NotReady ...
 	NotReady MaintenancePolicy = "NotReady"
 	// Unschedulable ...
@@ -41,6 +43,8 @@ type MaintenanceLimitSpec struct {
 type MaintenanceLimitStatus struct {
 	// Limit dynamically updated by operator based on current cluster state
 	Limit uint `json:"limit,omitempty"`
+	// Unavailable nodes filtered by above policies
+	Unavailable map[string]MaintenancePolicy `json:"unavailable,omitempty"`
 }
 
 // MaintenanceLimit is the Schema for the maintenancelimits API
