@@ -6,7 +6,7 @@ resources:
 - bases/repairman.k8s.io_maintenancerequests.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
-patches:
+patchesStrategicMerge:
 # [WEBHOOK] patches here are for enabling the conversion webhook for each CRD
 #- patches/webhook_in_maintenancelimits.yaml
 #- patches/webhook_in_maintenancerequests.yaml
