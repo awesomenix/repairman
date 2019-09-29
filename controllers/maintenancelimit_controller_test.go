@@ -73,14 +73,13 @@ func TestUpdateMaitenanceLimits(t *testing.T) {
 			Name: "node",
 		},
 		Spec: repairmanv1.MaintenanceLimitSpec{
-			Limit:    50,
-			Policies: []repairmanv1.MaintenanceLimitPolicy{},
+			Limit: 50,
 		},
 	}
 	err = f.Create(context.TODO(), ml)
 	err = reconciler.UpdateMaintenanceLimits(context.TODO(), reconciler.Log, ml)
 	assert.Nil(err)
-	assert.Equal(ml.Status.Limit, uint(1))
+	assert.Equal(uint(1), ml.Status.Limit)
 
 	for i := 1; i < 10; i++ {
 		node := &corev1.Node{
@@ -93,7 +92,7 @@ func TestUpdateMaitenanceLimits(t *testing.T) {
 	}
 	err = reconciler.UpdateMaintenanceLimits(context.TODO(), reconciler.Log, ml)
 	assert.Nil(err)
-	assert.Equal(ml.Status.Limit, uint(5))
+	assert.Equal(uint(5), ml.Status.Limit)
 }
 
 func TestCalculateMaintenanceLimit(t *testing.T) {
@@ -108,8 +107,7 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 					Name: "node",
 				},
 				Spec: repairmanv1.MaintenanceLimitSpec{
-					Limit:    50,
-					Policies: []repairmanv1.MaintenanceLimitPolicy{},
+					Limit: 50,
 				},
 			}, &corev1.NodeList{}, 0,
 		},
@@ -136,8 +134,7 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 					Name: "node",
 				},
 				Spec: repairmanv1.MaintenanceLimitSpec{
-					Limit:    50,
-					Policies: []repairmanv1.MaintenanceLimitPolicy{},
+					Limit: 50,
 				},
 			}, &corev1.NodeList{
 				Items: []corev1.Node{
@@ -146,11 +143,51 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 				},
 			}, 1,
 		},
+		{
+			&repairmanv1.MaintenanceLimit{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "node",
+				},
+				Spec: repairmanv1.MaintenanceLimitSpec{
+					Limit:    50,
+					Policies: []repairmanv1.MaintenancePolicy{repairmanv1.Unschedulable},
+				},
+			}, &corev1.NodeList{
+				Items: []corev1.Node{
+					corev1.Node{},
+					corev1.Node{
+						Spec: corev1.NodeSpec{
+							Unschedulable: true,
+						},
+					},
+				},
+			}, 0,
+		},
+		{
+			&repairmanv1.MaintenanceLimit{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "node",
+				},
+				Spec: repairmanv1.MaintenanceLimitSpec{
+					Limit:    50,
+					Policies: []repairmanv1.MaintenancePolicy{repairmanv1.NotReady},
+				},
+			}, &corev1.NodeList{
+				Items: []corev1.Node{
+					corev1.Node{},
+					corev1.Node{
+						Spec: corev1.NodeSpec{
+							Unschedulable: true,
+						},
+					},
+				},
+			}, 1,
+		},
 	}
 	assert, reconciler := testSetup(t)
 	for _, tt := range tests {
-		limit := reconciler.calculateMaintenanceLimit(context.TODO(), reconciler.Log, tt.maintenanceLimit, tt.nodeList)
-		assert.Equal(limit, tt.limit)
+		limit := reconciler.calculateMaintenanceLimit(context.TODO(), tt.maintenanceLimit, tt.nodeList)
+		assert.Equal(tt.limit, limit)
 	}
 }
 
@@ -158,8 +195,7 @@ func TestApplyNodePolicy(t *testing.T) {
 	var tests = []struct {
 		node             corev1.Node
 		maintenanceLimit *repairmanv1.MaintenanceLimit
-		policied         map[string]corev1.Node
-		policiedCount    int
+		expected         bool
 	}{
 		{
 			corev1.Node{
@@ -173,8 +209,7 @@ func TestApplyNodePolicy(t *testing.T) {
 			&repairmanv1.MaintenanceLimit{
 				Spec: repairmanv1.MaintenanceLimitSpec{},
 			},
-			map[string]corev1.Node{},
-			0,
+			true,
 		},
 		{
 			corev1.Node{
@@ -187,11 +222,10 @@ func TestApplyNodePolicy(t *testing.T) {
 			},
 			&repairmanv1.MaintenanceLimit{
 				Spec: repairmanv1.MaintenanceLimitSpec{
-					Policies: []repairmanv1.MaintenanceLimitPolicy{repairmanv1.RespectUnschedulableNodes},
+					Policies: []repairmanv1.MaintenancePolicy{repairmanv1.Unschedulable},
 				},
 			},
-			map[string]corev1.Node{},
-			1,
+			false,
 		},
 		{
 			corev1.Node{
@@ -209,11 +243,10 @@ func TestApplyNodePolicy(t *testing.T) {
 			},
 			&repairmanv1.MaintenanceLimit{
 				Spec: repairmanv1.MaintenanceLimitSpec{
-					Policies: []repairmanv1.MaintenanceLimitPolicy{repairmanv1.RespectNotReadyNodes},
+					Policies: []repairmanv1.MaintenancePolicy{repairmanv1.NotReady},
 				},
 			},
-			map[string]corev1.Node{},
-			1,
+			false,
 		},
 		{
 			corev1.Node{
@@ -234,19 +267,17 @@ func TestApplyNodePolicy(t *testing.T) {
 			},
 			&repairmanv1.MaintenanceLimit{
 				Spec: repairmanv1.MaintenanceLimitSpec{
-					Policies: []repairmanv1.MaintenanceLimitPolicy{
-						repairmanv1.RespectNotReadyNodes,
-						repairmanv1.RespectUnschedulableNodes,
+					Policies: []repairmanv1.MaintenancePolicy{
+						repairmanv1.NotReady,
+						repairmanv1.Unschedulable,
 					},
 				},
 			},
-			map[string]corev1.Node{},
-			1,
+			false,
 		},
 	}
 	assert, reconciler := testSetup(t)
 	for _, tt := range tests {
-		reconciler.applyNodePolicies(tt.node, tt.maintenanceLimit, tt.policied)
-		assert.Equal(tt.policiedCount, len(tt.policied))
+		assert.Equal(tt.expected, reconciler.nodeAvailable(tt.node, tt.maintenanceLimit))
 	}
 }

@@ -47,6 +47,7 @@ spec:
               type: integer
             policies:
               items:
+                description: MaintenancePolicy ...
                 type: string
               type: array
           type: object

@@ -19,19 +19,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type MaintenanceLimitPolicy string
+// MaintenancePolicy ...
+type MaintenancePolicy string
 
 const (
-	RespectNotReadyNodes      MaintenanceLimitPolicy = "RespectNotReadyNodes"
-	RespectUnschedulableNodes MaintenanceLimitPolicy = "RespectUnschedulableNodes"
+	// NotReady ...
+	NotReady MaintenancePolicy = "NotReady"
+	// Unschedulable ...
+	Unschedulable MaintenancePolicy = "Unschedulable"
 )
 
 // MaintenanceLimitSpec defines the desired state of MaintenanceLimit
 type MaintenanceLimitSpec struct {
 	// +kubebuilder:validation:Maximum=100
 	// +kubebuilder:validation:Minimum=0
-	Limit    uint                     `json:"limit,omitempty"`
-	Policies []MaintenanceLimitPolicy `json:"policies,omitempty"`
+	Limit    uint                `json:"limit,omitempty"`
+	Policies []MaintenancePolicy `json:"policies,omitempty"`
 }
 
 // MaintenanceLimitStatus defines the observed state of MaintenanceLimit

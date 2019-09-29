@@ -87,7 +87,7 @@ func (in *MaintenanceLimitSpec) DeepCopyInto(out *MaintenanceLimitSpec) {
 	*out = *in
 	if in.Policies != nil {
 		in, out := &in.Policies, &out.Policies
-		*out = make([]MaintenanceLimitPolicy, len(*in))
+		*out = make([]MaintenancePolicy, len(*in))
 		copy(*out, *in)
 	}
 }

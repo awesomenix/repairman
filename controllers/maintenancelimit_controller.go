@@ -32,6 +32,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// PolicyHandler returns true if
+type PolicyHandler func(corev1.Node) bool
+
 // MaintenanceLimitReconciler reconciles a MaintenanceLimit object
 type MaintenanceLimitReconciler struct {
 	client.Client
@@ -80,7 +83,7 @@ func (r *MaintenanceLimitReconciler) UpdateMaintenanceLimits(ctx context.Context
 		log.Error(err, "failed to get", "type", ml.Name)
 		return err
 	}
-	limit := r.calculateMaintenanceLimit(ctx, log, ml, nodeList)
+	limit := r.calculateMaintenanceLimit(ctx, ml, nodeList)
 
 	if ml.Status.Limit != limit {
 		ml.Status.Limit = limit
@@ -95,63 +98,59 @@ func (r *MaintenanceLimitReconciler) UpdateMaintenanceLimits(ctx context.Context
 
 // calculateMaintenanceLimit calculates the maximum number of nodes
 // that can be updated at a given time
-func (r *MaintenanceLimitReconciler) calculateMaintenanceLimit(ctx context.Context, log logr.Logger, ml *repairmanv1.MaintenanceLimit, nodeList *corev1.NodeList) uint {
-	var unavailable = map[string]corev1.Node{}
-	for _, node := range nodeList.Items {
-		r.applyNodePolicies(node, ml, unavailable)
-	}
-
+func (r *MaintenanceLimitReconciler) calculateMaintenanceLimit(ctx context.Context, ml *repairmanv1.MaintenanceLimit, nodeList *corev1.NodeList) uint {
 	if len(nodeList.Items) <= 0 {
 		return 0
 	}
-	available := r.calculateAvailableNodes(ctx, nodeList, unavailable)
-	nominalLimit := ml.Spec.Limit * available / 100
-	return uint(math.Max(float64(nominalLimit), float64(1)))
-}
 
-func respectNotReadyNodeHandler(node corev1.Node) bool {
-	for _, condition := range node.Status.Conditions {
-		if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionFalse {
-			return true
+	unavailable := 0
+	for _, node := range nodeList.Items {
+		if !r.nodeAvailable(node, ml) {
+			unavailable++
 		}
 	}
-	return false
+
+	nominalLimit := (int(ml.Spec.Limit) * len(nodeList.Items) / 100)
+	calculatedLimit := math.Max(float64(nominalLimit), float64(1)) - float64(unavailable)
+	return uint(math.Max(calculatedLimit, float64(0)))
 }
 
-func respectUnschedulableNodeHandler(node corev1.Node) bool {
+func noOp(node corev1.Node) bool {
+	return true
+}
+
+func notReady(node corev1.Node) bool {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == corev1.NodeReady && condition.Status == corev1.ConditionFalse {
+			return false
+		}
+	}
+	return true
+}
+
+func unschedulable(node corev1.Node) bool {
 	if node.Spec.Unschedulable {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
-func getPolicyHandlers() map[repairmanv1.MaintenanceLimitPolicy]func(corev1.Node) bool {
-	return map[repairmanv1.MaintenanceLimitPolicy]func(corev1.Node) bool{
-		repairmanv1.RespectNotReadyNodes:      respectNotReadyNodeHandler,
-		repairmanv1.RespectUnschedulableNodes: respectUnschedulableNodeHandler,
+func policyHandler(policy repairmanv1.MaintenancePolicy) PolicyHandler {
+	switch policy {
+	case repairmanv1.NotReady:
+		return notReady
+	case repairmanv1.Unschedulable:
+		return unschedulable
 	}
+	return noOp
 }
 
 // applyNodePolicies determines which nodes are effected by policies
-func (r *MaintenanceLimitReconciler) applyNodePolicies(node corev1.Node, ml *repairmanv1.MaintenanceLimit, policied map[string]corev1.Node) {
-	handlerFuncs := getPolicyHandlers()
+func (r *MaintenanceLimitReconciler) nodeAvailable(node corev1.Node, ml *repairmanv1.MaintenanceLimit) bool {
 	for _, policy := range ml.Spec.Policies {
-		handlerFunc, ok := handlerFuncs[policy]
-		if !ok {
-			continue
-		}
-		if handlerFunc(node) {
-			policied[node.Name] = node
+		if !policyHandler(policy)(node) {
+			return false
 		}
 	}
-}
-
-func (r *MaintenanceLimitReconciler) calculateAvailableNodes(ctx context.Context, nodeList *corev1.NodeList, unavailable map[string]corev1.Node) uint {
-	var available uint
-	for _, node := range nodeList.Items {
-		if _, ok := unavailable[node.Name]; !ok {
-			available++
-		}
-	}
-	return available
+	return true
 }
