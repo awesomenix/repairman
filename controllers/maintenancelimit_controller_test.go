@@ -124,10 +124,10 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 			},
 			&corev1.NodeList{
 				Items: []corev1.Node{
-					corev1.Node{},
-					corev1.Node{},
-					corev1.Node{},
-					corev1.Node{},
+					{},
+					{},
+					{},
+					{},
 				},
 			},
 			2,
@@ -143,8 +143,8 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 			},
 			&corev1.NodeList{
 				Items: []corev1.Node{
-					corev1.Node{},
-					corev1.Node{},
+					{},
+					{},
 				},
 			},
 			1,
@@ -161,8 +161,8 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 			},
 			&corev1.NodeList{
 				Items: []corev1.Node{
-					corev1.Node{},
-					corev1.Node{
+					{},
+					{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: "dummynode0",
 						},
@@ -186,8 +186,8 @@ func TestCalculateMaintenanceLimit(t *testing.T) {
 			},
 			&corev1.NodeList{
 				Items: []corev1.Node{
-					corev1.Node{},
-					corev1.Node{
+					{},
+					{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: "dummynode0",
 						},
@@ -253,7 +253,7 @@ func TestApplyNodePolicy(t *testing.T) {
 				},
 				Status: corev1.NodeStatus{
 					Conditions: []corev1.NodeCondition{
-						corev1.NodeCondition{
+						{
 							Type:   corev1.NodeReady,
 							Status: corev1.ConditionFalse,
 						},
@@ -277,7 +277,7 @@ func TestApplyNodePolicy(t *testing.T) {
 				},
 				Status: corev1.NodeStatus{
 					Conditions: []corev1.NodeCondition{
-						corev1.NodeCondition{
+						{
 							Type:   corev1.NodeReady,
 							Status: corev1.ConditionFalse,
 						},

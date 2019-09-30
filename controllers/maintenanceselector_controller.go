@@ -34,6 +34,7 @@ type MaintenanceSelectorReconciler struct {
 // +kubebuilder:rbac:groups=repairman.k8s.io,resources=maintenanceselectors,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=repairman.k8s.io,resources=maintenanceselectors/status,verbs=get;update;patch
 
+// Reconcile ...
 func (r *MaintenanceSelectorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
 	_ = r.Log.WithValues("maintenanceselector", req.NamespacedName)
@@ -43,6 +44,7 @@ func (r *MaintenanceSelectorReconciler) Reconcile(req ctrl.Request) (ctrl.Result
 	return ctrl.Result{}, nil
 }
 
+// SetupWithManager ...
 func (r *MaintenanceSelectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repairmanv1.MaintenanceSelector{}).

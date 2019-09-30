@@ -46,6 +46,7 @@ type MaintenanceLimitReconciler struct {
 // +kubebuilder:rbac:groups=repairman.k8s.io,resources=maintenancelimits,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=repairman.k8s.io,resources=maintenancelimits/status,verbs=get;update;patch
 
+// Reconcile ...
 func (r *MaintenanceLimitReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("maintenancelimit", req.NamespacedName)
@@ -67,6 +68,7 @@ func (r *MaintenanceLimitReconciler) Reconcile(req ctrl.Request) (ctrl.Result, e
 	return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 }
 
+// SetupWithManager ...
 func (r *MaintenanceLimitReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repairmanv1.MaintenanceLimit{}).

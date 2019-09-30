@@ -102,6 +102,7 @@ func (r *MaintenanceRequestReconciler) ApproveMaintenanceRequest(ctx context.Con
 	return ret, nil
 }
 
+// SetupWithManager ...
 func (r *MaintenanceRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&repairmanv1.MaintenanceRequest{}).

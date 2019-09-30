@@ -114,6 +114,7 @@ func TestApproveMaintenanceRequest(t *testing.T) {
 
 	mr1.Spec.State = repairmanv1.Completed
 	err = f.Update(context.TODO(), mr1)
+	assert.Nil(err)
 
 	_, err = mrreconciler.ApproveMaintenanceRequest(context.TODO(), mrreconciler.Log, mr2)
 	assert.Nil(err)
