@@ -58,3 +58,23 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - repairman.k8s.io
+  resources:
+  - maintenanceselectors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - repairman.k8s.io
+  resources:
+  - maintenanceselectors/status
+  verbs:
+  - get
+  - patch
+  - update

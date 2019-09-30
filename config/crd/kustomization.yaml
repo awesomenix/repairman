@@ -4,17 +4,20 @@
 resources:
 - bases/repairman.k8s.io_maintenancelimits.yaml
 - bases/repairman.k8s.io_maintenancerequests.yaml
+- bases/repairman.k8s.io_maintenanceselectors.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
 # [WEBHOOK] patches here are for enabling the conversion webhook for each CRD
 #- patches/webhook_in_maintenancelimits.yaml
 #- patches/webhook_in_maintenancerequests.yaml
+#- patches/webhook_in_maintenanceselectors.yaml
 # +kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CAINJECTION] patches here are for enabling the CA injection for each CRD
 #- patches/cainjection_in_maintenancelimits.yaml
 #- patches/cainjection_in_maintenancerequests.yaml
+#- patches/cainjection_in_maintenanceselectors.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

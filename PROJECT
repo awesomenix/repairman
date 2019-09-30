@@ -8,3 +8,6 @@ resources:
 - group: repairman
   version: v1
   kind: MaintenanceRequest
+- group: repairman
+  version: v1
+  kind: MaintenanceSelector

@@ -36,8 +36,8 @@ var (
 )
 
 func init() {
-	corev1.AddToScheme(scheme)
-	repairmanv1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+	_ = repairmanv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -77,6 +77,13 @@ func main() {
 	}).SetupWithManager(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "MaintenanceRequest")
+		os.Exit(1)
+	}
+	if err = (&controllers.MaintenanceSelectorReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("MaintenanceSelector"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MaintenanceSelector")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
